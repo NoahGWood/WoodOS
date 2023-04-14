@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <limine.h>
+#include "kernel_plus.h"
 
 // The Limine requests can be placed anywhere, but it is important that
 // the compiler does not optimise them away, so, usually, they should
@@ -8,6 +9,12 @@
 
 static volatile struct limine_framebuffer_request framebuffer_request = {
     .id = LIMINE_FRAMEBUFFER_REQUEST,
+    .revision = 0
+};
+
+// Get memory map from Limine
+static volatile struct limine_memmap_request __attribute__((used))mmap = {
+    .id = { LIMINE_COMMON_MAGIC, 0x67cf3d9d378a806f, 0xe304acdfc50c3c62 },
     .revision = 0
 };
 
@@ -94,7 +101,15 @@ void _start(void) {
         uint32_t *fb_ptr = framebuffer->address;
         fb_ptr[i * (framebuffer->pitch / 4) + i] = 0xffffff;
     }
-
+    
+    // Set up Interrupts
+    setup_idt();
+    // Set up timer
+    // Set up PS/2 Keyboard Fallback
+    // Set up Serial Terminal
+    // Set up memory
+    struct limine_memmap_response* res = mmap.response;
+    setup_memory(res);
     // We're done, just hang...
     hcf();
 }

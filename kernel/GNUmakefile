@@ -59,7 +59,7 @@ override CPPFLAGS := \
     -I. \
     $(CPPFLAGS) \
     -MMD \
-    -MP
+    -MP 
 
 # Internal linker flags that should not be changed by the user.
 override LDFLAGS += \
@@ -81,10 +81,11 @@ override NASMFLAGS += \
 # Use "find" to glob all *.c, *.S, and *.asm files in the tree and obtain the
 # object and header dependency file names.
 override CFILES := $(shell find -L . -type f -name '*.c')
+override CPPFILES := $(shell find -L . -type f -name '*.cpp')
 override ASFILES := $(shell find -L . -type f -name '*.S')
 override NASMFILES := $(shell find -L . -type f -name '*.asm')
-override OBJ := $(CFILES:.c=.o) $(ASFILES:.S=.o) $(NASMFILES:.asm=.o)
-override HEADER_DEPS := $(CFILES:.c=.d) $(ASFILES:.S=.d)
+override OBJ := $(CFILES:.c=.o) $(CPPFILES:.cpp=.o) $(ASFILES:.S=.o) $(NASMFILES:.asm=.o)
+override HEADER_DEPS := $(CFILES:.c=.d) $(CPPFILES:.cpp=.d) $(ASFILES:.S=.d)
 
 # Default target.
 .PHONY: all
@@ -99,6 +100,10 @@ $(KERNEL): $(OBJ)
 
 # Include header dependencies.
 -include $(HEADER_DEPS)
+
+# Compilation rules for *.cpp files.
+%.o: %.cpp limine.h
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c $< -o $@
 
 # Compilation rules for *.c files.
 %.o: %.c limine.h
